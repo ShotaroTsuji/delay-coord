@@ -1,0 +1,8 @@
+[package]
+name = "delay-coord"
+version = "0.1.0"
+authors = ["Shotaro Tsuji <Shotaro.Tsuji@gmail.com>"]
+
+[dependencies]
+clap = "*"
+either = "1.4"
