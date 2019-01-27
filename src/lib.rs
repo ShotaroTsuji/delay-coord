@@ -3,7 +3,7 @@ use std::ops::Index;
 /// Delay-coordinates
 ///
 /// This trait describes delay-coordinates.
-pub trait DelayCoordinates {
+pub trait DelayCoordinates where Self: Sized {
     /// Time delay of the delay-coordinates
     fn delay(&self) -> usize;
     /// Embedding dimension of the delay-coordinates
@@ -12,6 +12,13 @@ pub trait DelayCoordinates {
     fn window_size(&self) -> usize;
     /// Maps an index in the delay-coordinates into the index of the underlying series
     fn map_coord(&self, index: usize) -> Option<usize>;
+
+    fn mapping_iter<'a, T>(&'a self, slice: &'a [T]) -> MappingIter<'a, T, Self> {
+        MappingIter {
+            coord: &self,
+            slice: slice,
+        }
+    }
 }
 
 /// Forward Delay-coordinates
@@ -27,17 +34,6 @@ pub trait DelayCoordinates {
 pub struct ForwardDelayCoordinates {
     pub delay: usize,
     pub dimension: usize,
-}
-
-impl ForwardDelayCoordinates {
-    /// Returns an iterator that produces `ForwardLiftedView`s
-    pub fn mapping_iter<'a, T>(&'a self, slice: &'a [T]) -> ForwardMapping<'a, T, Self> {
-        let ws = self.window_size();
-        ForwardMapping {
-            coord: &self,
-            slice: slice,
-        }
-    }
 }
 
 impl DelayCoordinates for ForwardDelayCoordinates {
@@ -65,12 +61,12 @@ impl DelayCoordinates for ForwardDelayCoordinates {
 }
 
 #[derive(Debug, Clone)]
-pub struct ForwardMapping<'a, T, C> {
+pub struct MappingIter<'a, T, C> {
     coord: &'a C,
     slice: &'a [T],
 }
 
-impl<'a, T, C> Iterator for ForwardMapping<'a, T, C>
+impl<'a, T, C> Iterator for MappingIter<'a, T, C>
 where
     C: DelayCoordinates,
 {

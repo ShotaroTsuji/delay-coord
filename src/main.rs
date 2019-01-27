@@ -1,5 +1,5 @@
 use clap::{App, Arg};
-use delay_coord::ForwardDelayCoordinates;
+use delay_coord::{DelayCoordinates, ForwardDelayCoordinates};
 
 fn open_file_or_stdin<'a, T: AsRef<::std::path::Path>>(
     path: &Option<T>,
