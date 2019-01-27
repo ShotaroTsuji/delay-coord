@@ -86,6 +86,35 @@ where
     }
 }
 
+impl<'a, T, C> MappingIter<'a, T, C>
+where
+    T: Clone,
+    C: DelayCoordinates,
+{
+    pub fn to_vec(self) -> MappingIterToVec<'a, T, C> {
+        MappingIterToVec {
+            iter: self,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MappingIterToVec<'a, T, C> {
+    iter: MappingIter<'a, T, C>,
+}
+
+impl<'a, T, C> Iterator for MappingIterToVec<'a, T, C>
+where
+    T: Clone,
+    C: DelayCoordinates,
+{
+    type Item = Vec<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|view| view.to_vec())
+    }
+}
+
 /// View of a slice mapped in delay-coordinates
 ///
 /// This struct provides an access for the underlying slice with indices in delay-coordinates.
@@ -182,6 +211,23 @@ mod test {
             dimension: 3,
         };
         let mut iter = coord.mapping_iter(&data).map(|p| p.to_vec());
+        assert_eq!(iter.next(), Some(vec![4, 2, 0]));
+        assert_eq!(iter.next(), Some(vec![5, 3, 1]));
+        assert_eq!(iter.next(), Some(vec![6, 4, 2]));
+        assert_eq!(iter.next(), Some(vec![7, 5, 3]));
+        assert_eq!(iter.next(), Some(vec![8, 6, 4]));
+        assert_eq!(iter.next(), Some(vec![9, 7, 5]));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_forward_coord_to_vec() {
+        let data = (0..10).collect::<Vec<usize>>();
+        let coord = ForwardDelayCoordinates {
+            delay: 2,
+            dimension: 3,
+        };
+        let mut iter = coord.mapping_iter(&data).to_vec();
         assert_eq!(iter.next(), Some(vec![4, 2, 0]));
         assert_eq!(iter.next(), Some(vec![5, 3, 1]));
         assert_eq!(iter.next(), Some(vec![6, 4, 2]));
