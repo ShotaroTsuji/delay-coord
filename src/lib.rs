@@ -98,6 +98,18 @@ where
     }
 }
 
+impl<'a, T, C> MappingIter<'a, T, C>
+where
+    T: std::iter::IntoIterator + Clone,
+    C: DelayCoordinates,
+{
+    pub fn to_flatten_vec(self) -> MappingIterToFlattenVec<'a, T, C> {
+        MappingIterToFlattenVec {
+            iter: self,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MappingIterToVec<'a, T, C> {
     iter: MappingIter<'a, T, C>,
@@ -112,6 +124,23 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|view| view.to_vec())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MappingIterToFlattenVec<'a, T, C> {
+    iter: MappingIter<'a, T, C>,
+}
+
+impl<'a, T, C> Iterator for MappingIterToFlattenVec<'a, T, C>
+where
+    T: std::iter::IntoIterator + Clone,
+    C: DelayCoordinates,
+{
+    type Item = Vec<<T as std::iter::IntoIterator>::Item>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|view| view.to_flatten_vec())
     }
 }
 
@@ -245,6 +274,22 @@ mod test {
             dimension: 2,
         };
         let mut iter = coord.mapping_iter(&data).map(|p| p.to_flatten_vec());
+        assert_eq!(iter.next(), Some(vec![5, 5, 0, 0]));
+        assert_eq!(iter.next(), Some(vec![6, 6, 1, 1]));
+        assert_eq!(iter.next(), Some(vec![7, 7, 2, 2]));
+        assert_eq!(iter.next(), Some(vec![8, 8, 3, 3]));
+        assert_eq!(iter.next(), Some(vec![9, 9, 4, 4]));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_forward_coord_to_flatten_vec() {
+        let data = (0..10).map(|n| vec![n, n]).collect::<Vec<_>>();
+        let coord = ForwardDelayCoordinates {
+            delay: 5,
+            dimension: 2,
+        };
+        let mut iter = coord.mapping_iter(&data).to_flatten_vec();
         assert_eq!(iter.next(), Some(vec![5, 5, 0, 0]));
         assert_eq!(iter.next(), Some(vec![6, 6, 1, 1]));
         assert_eq!(iter.next(), Some(vec![7, 7, 2, 2]));
