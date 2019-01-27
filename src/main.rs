@@ -1,10 +1,5 @@
-extern crate clap;
-extern crate either;
-extern crate delay_coord;
-
 use clap::{App, Arg};
-
-use delay_coord::DelayCoordinates;
+use delay_coord::ForwardDelayCoordinates;
 
 fn open_file_or_stdin<'a, T: AsRef<::std::path::Path>>(
     path: &Option<T>,
@@ -72,10 +67,11 @@ fn main() {
     let mut input = open_file_or_stdin(&input, &stdin);
     let data = read_data_file(&mut input);
 
-    let dc = DelayCoordinates::new(dimension, delay);
-    let iter = dc.iter(&data);
-    for v in iter {
-        let v: Vec<f64> = v.into_iter().flatten().collect();
+    let coord = ForwardDelayCoordinates {
+            dimension: dimension,
+            delay: delay,
+    };
+    for v in coord.mapping_iter(&data).map(|p| p.to_flatten_vec()) {
         for i in 0..v.len() {
             let delim = if i == v.len()-1 { '\n' } else { ',' };
             print!("{}{}", v[i], delim);
